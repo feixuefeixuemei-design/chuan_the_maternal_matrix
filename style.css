@@ -1,0 +1,293 @@
+/* 核心修复：创建一个专门的背景光晕层 */
+        #bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            /* 使用 CSS 变量实时控制红光中心 */
+            background-image: radial-gradient(
+                circle 1000px at var(--bgX, 50%) var(--bgY, 50%), 
+                rgba(255, 140, 0, 0.4) 0%, 
+                rgba(100, 28, 0, 0.15) 40%, 
+                rgba(0, 0, 0, 1) 100%
+            );
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        body {
+            margin: 0; 
+            overflow: hidden; 
+            background-color: transparent; 
+            font-family: "Garamond", "Serif"; 
+            /* 修改这一行 */
+            touch-action: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1; /* 位于红光层之上 */
+        }
+
+        #ui { 
+            position: absolute; bottom: 8%; right: 5%; text-align: right; 
+            z-index: 2000; transition: opacity 1.2s ease; width: auto;
+        }
+        .ui-hide { opacity: 0; pointer-events: none; }
+        input {
+            background: none; border: none; border-bottom: 1px solid #ff9500;
+            color: #fff; width: 200px; padding: 8px 0; text-align: right; 
+            outline: none; font-size: 16px !important; 
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 149, 0, 0.8); 
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-style: italic; -webkit-appearance: none; opacity: 0.6;
+        }
+        input:focus { width: 260px; opacity: 1; border-bottom: 2px solid #ffcc00; }
+        
+        #enter-btn {
+            background: none; border: 1px dashed #ff9500; color: #ff9500;
+            padding: 5px 12px; margin-left: 15px; cursor: pointer;
+            font-family: "Garamond", "Serif"; font-size: 0.75rem;
+            letter-spacing: 3px; transition: 0.4s; opacity: 0.5;
+            font-style: italic;
+        }
+        #enter-btn:hover { opacity: 1; border: 1px solid #ffcc00; text-shadow: 0 0 10px #ff9500; }
+
+        #error-hint {
+            color: #ff4400; font-size: 0.65rem; margin-top: 8px; opacity: 0;
+            transition: opacity 0.3s; letter-spacing: 3px; font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 68, 0, 0.5);
+        }
+
+        #leave-warning {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(45, 18, 5, 0.96);
+            color: #ff9500; z-index: 5000; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; pointer-events: auto;
+            box-sizing: border-box; padding: 20px;
+        }
+
+        .pulse-text {
+            animation: warningPulse 2s infinite ease-in-out;
+            font-size: clamp(1.2rem, 5vw, 2.2rem); 
+            width: 90%; max-width: 800px; line-height: 1.4; letter-spacing: 2px;
+        }
+        .warning-wrap { display: inline-block; white-space: nowrap; }
+        .sub-warning {
+            font-size: clamp(0.8rem, 3.5vw, 1.1rem); margin-top: 25px;
+            opacity: 0.6; width: 85%; line-height: 1.6; font-style: italic;
+        }
+
+        @keyframes warningPulse {
+            0% { transform: scale(1); text-shadow: 0 0 20px #ff0000; opacity: 0.8; }
+            50% { transform: scale(1.02); text-shadow: 0 0 40px #ff4400; opacity: 1; }
+            100% { transform: scale(1); text-shadow: 0 0 20px #ff0000; opacity: 0.8; }
+        }
+
+        /* 【第一步】诗歌文字浮现层 */
+        #poem-manifesto {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2500; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 3s ease;
+        }
+        #manifesto-text {
+            color: #ffcc00; font-size: 1.4rem; 
+            line-height: 1.4; /* 从 2 减小到 1.4 */
+            font-style: italic;
+            text-align: center; text-shadow: 0 0 20px rgba(255,149,0,0.7);
+            max-width: 80%;
+            text-wrap: balance;
+        }
+        /* 强化后的 SEAL ARCHIVE 按钮样式 */
+        #seal-archive-btn {
+            margin-top: 40px; 
+            background: rgba(255, 149, 0, 0.59); /* 淡淡的实体橙色底色 */
+            border: 2px solid #ff9500; /* 加粗并锁定橙色边框 */
+            color: #ff9500; 
+            padding: 15px 45px; 
+            letter-spacing: 6px;
+            cursor: pointer; 
+            font-family: Garamond, serif; 
+            font-size: 1rem; /* 稍微调大字号 */
+            font-weight: bold;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            opacity: 1; /* 确保完全不透明 */
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); /* 文字发光 */
+            box-shadow: 0 0 20px rgba(255, 149, 0, 0.2); /* 按钮外发光 */
+            animation: btnPulse 2s infinite ease-in-out; /* 呼吸动画 */
+        }
+
+        #seal-archive-btn:hover { 
+            background: #ff9500; /* 悬停时变为实心橙色 */
+            color: #000; /* 文字变黑，形成强烈对比 */
+            box-shadow: 0 0 40px rgba(255, 149, 0, 0.6); 
+            transform: scale(1.1); /* 悬停微调放大 */
+            letter-spacing: 10px;
+        }
+
+        /* 专门为这个按钮添加的脉动动画，让它在屏幕中央不断闪烁提醒 */
+        @keyframes btnPulse {
+            0% { box-shadow: 0 0 15px rgba(255, 149, 0, 0.3); border-color: #ff9500; }
+            50% { box-shadow: 0 0 35px rgba(255, 149, 0, 0.7); border-color: #ffcc00; }
+            100% { box-shadow: 0 0 15px rgba(255, 149, 0, 0.3); border-color: #ff9500; }
+        }
+
+        #poem-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(
+              circle at center, 
+            rgba(180, 40, 0, 0.9) 0%,   /* 加亮：将原来的 60 改为 180，增加不透明度到 0.9 */
+            rgba(80, 20, 0, 0.6) 40%,   /* 新增：中间层，让红色范围更大更饱满 */
+            rgba(0, 0, 0, 1) 100%
+            );
+            z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 2.5s ease;
+            color: #ffcc00; text-align: center;
+            padding: 0;
+        }
+
+        #capture-area {
+            padding: 40px 30px;
+            background-color: #000; 
+            border: 1px solid rgba(255, 149, 0, 0.3);
+            position: relative;
+            width: 85%;
+            max-width: 450px; 
+            height: 550px; 
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        #bg-snapshot {
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
+            object-fit: fill; 
+            z-index: 0; 
+            opacity: 0.7; /* 提高一点透明度，让底色透过来更多 */
+            filter: brightness(1.5) contrast(1.3) saturate(1.5); /* 提高亮度、对比度和饱和度 */
+        }
+
+        #poem-meta, #poem-content, #qrcode-container, .brand {
+            position: relative; z-index: 10;
+        }
+
+        #poem-meta {
+            align-self: flex-start; 
+            text-align: left;
+            font-size: 0.7rem; 
+            letter-spacing: 1px; 
+            color: #ff9500; 
+            opacity: 0.5;
+            line-height: 1.6; 
+            font-family: monospace; 
+            margin-bottom: 5px;
+        }
+
+        #poem-content {
+            font-size: 1.3rem; 
+            line-height: 1.4; /* 从 1.8 减小到 1.4 */
+            text-shadow: 0 0 15px #ff9500; 
+            font-weight: 200; 
+            font-style: italic; 
+            margin: auto 0;
+            width: 100%;
+            word-wrap: break-word; 
+            text-wrap: balance;
+        }
+
+        #qrcode-container {
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            margin: 15px auto 5px; 
+            opacity: 0.9;
+            width: 80px; 
+            height: 80px; 
+            background: #000;
+        }
+        #qrcode-container canvas, #qrcode-container img {
+            width: 80px !important;
+            height: 80px !important;
+        }
+
+        .brand {
+            font-size: 0.65rem; 
+            color: #ff9500; 
+            opacity: 0.7;
+            margin-top: 5px; 
+            letter-spacing: 3px;
+        }
+
+        .action-btns { 
+            display: flex; 
+            gap: 15px; 
+            margin-top: 25px; 
+            width: 85%; 
+            max-width: 450px;
+            justify-content: center; 
+        }
+
+        .btn-style {
+            font-size: 0.75rem; 
+            opacity: 0.6; letter-spacing: 2px; 
+            color: #ffcc00; cursor: pointer; transition: 0.4s; 
+            padding: 10px 15px;
+            border: 1px solid rgba(255, 149, 0, 0.3); text-transform: uppercase; background: none;
+            white-space: nowrap; flex: 1; text-align: center;
+            font-family: "Garamond", "Serif";
+        }
+        .btn-style:hover { opacity: 1; border: 1px solid #ff9500; text-shadow: 0 0 10px #ff9500; }
+
+        #mobile-save-hint {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.96); z-index: 6000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        #mobile-save-hint img { 
+            width: 85%; max-width: 450px; 
+            border: 1px solid #ff9500; 
+            box-shadow: 0 0 40px rgba(255, 149, 0, 0.3);
+        }
+        #mobile-save-hint p { color: #ff9500; margin-top: 20px; font-size: 0.8rem; letter-spacing: 3px; }
+
+        @media (max-width: 600px) { 
+            #capture-area { width: 90%; height: 500px; padding: 30px 20px; }
+            #poem-content { font-size: 1.1rem; }
+            .action-btns { margin-top: 20px; gap: 8px; }
+            .btn-style { font-size: 0.65rem; padding: 10px 5px; }
+        }
+
+        .echo-text {
+            position: absolute; color: #ffca80; pointer-events: none; 
+            white-space: normal; word-wrap: break-word; text-align: center; width: 80%;
+            z-index: 100; opacity: 0; user-select: none; font-weight: 200; font-style: italic;
+            transform: translate(calc(-50% + var(--mX, 0px)), calc(-50% + var(--mY, 0px))) scale(var(--s, 1)) rotate(var(--rot));
+            will-change: transform, opacity;
+            text-shadow: 0 0 calc(var(--glow) * 1px) #ff9500;
+            animation: breathe 4s infinite alternate ease-in-out;
+        }
+
+        @keyframes breathe { from { letter-spacing: 1px; } to { letter-spacing: 4px; } }
+        .echo-animation { animation: floatUp var(--dur) cubic-bezier(0.2, 0, 0.3, 1) forwards; }
+        @keyframes floatUp {
+            0% { opacity: 0; --s: 0.8; filter: blur(5px); }
+            15% { opacity: var(--max-op); filter: blur(0px); }
+            85% { opacity: var(--max-op); filter: blur(0px); }
+            100% { opacity: 0; --s: 1.1; transform: translate(calc(-50% + var(--mX, 0px)), calc(-50% + var(--mY, 0px) + var(--moveY))) scale(var(--s)) rotate(var(--rot)); filter: blur(2px); }
+        }
